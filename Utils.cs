@@ -1,5 +1,6 @@
 using OpenTK.Graphics.OpenGL4;
 using StbImageSharp;
+
 namespace OpenGLApp511;
 
 public static class Utils
@@ -7,8 +8,10 @@ public static class Utils
     /// <summary>Аналог Utils::createShaderProgram(vertPath, fragPath).</summary>
     public static int CreateShaderProgram(string vertPath, string fragPath)
     {
-        int vertShader = CompileShader(ShaderType.VertexShader, File.ReadAllText(vertPath));
-        int fragShader = CompileShader(ShaderType.FragmentShader, File.ReadAllText(fragPath));
+        int vertShader = CompileShader(ShaderType.VertexShader,
+                                       File.ReadAllText(vertPath), vertPath);
+        int fragShader = CompileShader(ShaderType.FragmentShader,
+                                       File.ReadAllText(fragPath), fragPath);
 
         int program = GL.CreateProgram();
         GL.AttachShader(program, vertShader);
@@ -27,7 +30,7 @@ public static class Utils
         return program;
     }
 
-    private static int CompileShader(ShaderType type, string source)
+    private static int CompileShader(ShaderType type, string source, string path)
     {
         int id = GL.CreateShader(type);
         GL.ShaderSource(id, source);
@@ -36,7 +39,11 @@ public static class Utils
         GL.GetShader(id, ShaderParameter.CompileStatus, out int ok);
         if (ok == 0)
         {
-            Console.WriteLine($"ERROR::SHADER_COMPILATION ({type})\n{GL.GetShaderInfoLog(id)}");
+            Console.WriteLine($"=== SHADER COMPILE ERROR ===");
+            Console.WriteLine($"File : {Path.GetFullPath(path)}");
+            Console.WriteLine($"Type : {type}");
+            Console.WriteLine(GL.GetShaderInfoLog(id));
+            Console.WriteLine($"=== END OF LOG ===");
             CheckOpenGLError();
         }
 
@@ -64,11 +71,14 @@ public static class Utils
         int texId = GL.GenTexture();
         GL.BindTexture(TextureTarget.Texture2D, texId);
 
-        // Параметры фильтрации и wrapping
-        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
-        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
-        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
-        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
+        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter,
+                        (int)TextureMinFilter.Linear);
+        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter,
+                        (int)TextureMagFilter.Linear);
+        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS,
+                        (int)TextureWrapMode.Repeat);
+        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT,
+                        (int)TextureWrapMode.Repeat);
 
         if (!File.Exists(path))
         {
